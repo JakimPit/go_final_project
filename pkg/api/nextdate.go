@@ -2,6 +2,7 @@ package api
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 	"strconv"
 	"strings"
@@ -191,5 +192,7 @@ func nextDateHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.Write([]byte(next))
+	if _, err := w.Write([]byte(next)); err != nil {
+		log.Printf("nextdate write error: %v", err)
+	}
 }

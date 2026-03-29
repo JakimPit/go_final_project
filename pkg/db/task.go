@@ -1,6 +1,12 @@
 package db
 
-import "fmt"
+import (
+	"errors"
+	"fmt"
+)
+
+// ErrTaskNotFound возвращается когда задача не найдена по id
+var ErrTaskNotFound = errors.New("задача не найдена")
 
 // ID хранится строкой, чтобы не терять точность в JSON на стороне JS
 type Task struct {
@@ -27,7 +33,7 @@ func GetTask(id string) (*Task, error) {
 	t := &Task{}
 	var dbID int64
 	if err := row.Scan(&dbID, &t.Date, &t.Title, &t.Comment, &t.Repeat); err != nil {
-		return nil, fmt.Errorf("задача не найдена")
+		return nil, ErrTaskNotFound
 	}
 	t.ID = fmt.Sprint(dbID)
 	return t, nil
@@ -44,7 +50,7 @@ func UpdateTask(task *Task) error {
 		return err
 	}
 	if count == 0 {
-		return fmt.Errorf("задача не найдена")
+		return ErrTaskNotFound
 	}
 	return nil
 }
@@ -60,7 +66,7 @@ func UpdateDate(id, date string) error {
 		return err
 	}
 	if count == 0 {
-		return fmt.Errorf("задача не найдена")
+		return ErrTaskNotFound
 	}
 	return nil
 }
@@ -76,7 +82,7 @@ func DeleteTask(id string) error {
 		return err
 	}
 	if count == 0 {
-		return fmt.Errorf("задача не найдена")
+		return ErrTaskNotFound
 	}
 	return nil
 }
@@ -99,10 +105,13 @@ func Tasks(limit int) ([]*Task, error) {
 		t.ID = fmt.Sprint(dbID)
 		tasks = append(tasks, t)
 	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
 	if tasks == nil {
 		tasks = []*Task{}
 	}
-	return tasks, rows.Err()
+	return tasks, nil
 }
 
 func TasksBySearch(search string, limit int) ([]*Task, error) {
@@ -125,10 +134,13 @@ func TasksBySearch(search string, limit int) ([]*Task, error) {
 		t.ID = fmt.Sprint(dbID)
 		tasks = append(tasks, t)
 	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
 	if tasks == nil {
 		tasks = []*Task{}
 	}
-	return tasks, rows.Err()
+	return tasks, nil
 }
 
 func TasksByDate(date string, limit int) ([]*Task, error) {
@@ -149,8 +161,11 @@ func TasksByDate(date string, limit int) ([]*Task, error) {
 		t.ID = fmt.Sprint(dbID)
 		tasks = append(tasks, t)
 	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
 	if tasks == nil {
 		tasks = []*Task{}
 	}
-	return tasks, rows.Err()
+	return tasks, nil
 }

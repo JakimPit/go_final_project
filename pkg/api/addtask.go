@@ -22,27 +22,27 @@ func addTaskHandler(w http.ResponseWriter, r *http.Request) {
 	var task db.Task
 
 	if err := json.NewDecoder(r.Body).Decode(&task); err != nil {
-		writeError(w, "ошибка десериализации JSON: "+err.Error())
+		writeError(w, "ошибка десериализации JSON: "+err.Error(), http.StatusBadRequest)
 		return
 	}
 
 	if task.Title == "" {
-		writeError(w, "не указан заголовок задачи")
+		writeError(w, "не указан заголовок задачи", http.StatusBadRequest)
 		return
 	}
 
 	if err := checkDate(&task); err != nil {
-		writeError(w, err.Error())
+		writeError(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
 	id, err := db.AddTask(&task)
 	if err != nil {
-		writeError(w, "ошибка сохранения задачи: "+err.Error())
+		writeError(w, "ошибка сохранения задачи: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	writeJSON(w, map[string]string{"id": fmt.Sprint(id)})
+	writeJSON(w, map[string]string{"id": fmt.Sprint(id)}, http.StatusOK)
 }
 
 func checkDate(task *db.Task) error {

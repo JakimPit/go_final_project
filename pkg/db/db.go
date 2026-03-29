@@ -34,3 +34,9 @@ func Init(dbFile string) error {
 	_, err = db.Exec(schema)
 	return err
 }
+
+func Close() {
+	if db != nil {
+		db.Close()
+	}
+}

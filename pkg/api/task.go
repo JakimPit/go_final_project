@@ -2,6 +2,7 @@ package api
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
 
 	"go_final_project/pkg/db"
@@ -18,17 +19,21 @@ import (
 func getTaskHandler(w http.ResponseWriter, r *http.Request) {
 	id := r.FormValue("id")
 	if id == "" {
-		writeError(w, "не указан идентификатор задачи")
+		writeError(w, "не указан идентификатор задачи", http.StatusBadRequest)
 		return
 	}
 
 	task, err := db.GetTask(id)
 	if err != nil {
-		writeError(w, err.Error())
+		if errors.Is(err, db.ErrTaskNotFound) {
+			writeError(w, err.Error(), http.StatusNotFound)
+		} else {
+			writeError(w, err.Error(), http.StatusInternalServerError)
+		}
 		return
 	}
 
-	writeJSON(w, task)
+	writeJSON(w, task, http.StatusOK)
 }
 
 // updateTaskHandler godoc
@@ -44,31 +49,35 @@ func updateTaskHandler(w http.ResponseWriter, r *http.Request) {
 	var task db.Task
 
 	if err := json.NewDecoder(r.Body).Decode(&task); err != nil {
-		writeError(w, "ошибка десериализации JSON: "+err.Error())
+		writeError(w, "ошибка десериализации JSON: "+err.Error(), http.StatusBadRequest)
 		return
 	}
 
 	if task.ID == "" {
-		writeError(w, "не указан идентификатор задачи")
+		writeError(w, "не указан идентификатор задачи", http.StatusBadRequest)
 		return
 	}
 
 	if task.Title == "" {
-		writeError(w, "не указан заголовок задачи")
+		writeError(w, "не указан заголовок задачи", http.StatusBadRequest)
 		return
 	}
 
 	if err := checkDate(&task); err != nil {
-		writeError(w, err.Error())
+		writeError(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
 	if err := db.UpdateTask(&task); err != nil {
-		writeError(w, err.Error())
+		if errors.Is(err, db.ErrTaskNotFound) {
+			writeError(w, err.Error(), http.StatusNotFound)
+		} else {
+			writeError(w, err.Error(), http.StatusInternalServerError)
+		}
 		return
 	}
 
-	writeJSON(w, struct{}{})
+	writeJSON(w, struct{}{}, http.StatusOK)
 }
 
 // deleteTaskHandler godoc
@@ -82,14 +91,18 @@ func updateTaskHandler(w http.ResponseWriter, r *http.Request) {
 func deleteTaskHandler(w http.ResponseWriter, r *http.Request) {
 	id := r.FormValue("id")
 	if id == "" {
-		writeError(w, "не указан идентификатор задачи")
+		writeError(w, "не указан идентификатор задачи", http.StatusBadRequest)
 		return
 	}
 
 	if err := db.DeleteTask(id); err != nil {
-		writeError(w, err.Error())
+		if errors.Is(err, db.ErrTaskNotFound) {
+			writeError(w, err.Error(), http.StatusNotFound)
+		} else {
+			writeError(w, err.Error(), http.StatusInternalServerError)
+		}
 		return
 	}
 
-	writeJSON(w, struct{}{})
+	writeJSON(w, struct{}{}, http.StatusOK)
 }

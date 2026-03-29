@@ -2,6 +2,7 @@ package api
 
 import (
 	"encoding/json"
+	"log"
 	"net/http"
 )
 
@@ -30,11 +31,14 @@ func taskHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func writeJSON(w http.ResponseWriter, data any) {
+func writeJSON(w http.ResponseWriter, data any, status int) {
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-	json.NewEncoder(w).Encode(data)
+	w.WriteHeader(status)
+	if err := json.NewEncoder(w).Encode(data); err != nil {
+		log.Printf("writeJSON encode error: %v", err)
+	}
 }
 
-func writeError(w http.ResponseWriter, errText string) {
-	writeJSON(w, map[string]string{"error": errText})
+func writeError(w http.ResponseWriter, errText string, status int) {
+	writeJSON(w, map[string]string{"error": errText}, status)
 }

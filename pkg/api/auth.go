@@ -33,13 +33,13 @@ func signinHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		writeError(w, "неверный формат запроса")
+		writeError(w, "неверный формат запроса", http.StatusBadRequest)
 		return
 	}
 
 	pass := os.Getenv("TODO_PASSWORD")
 	if req.Password != pass {
-		writeError(w, "неверный пароль")
+		writeError(w, "неверный пароль", http.StatusUnauthorized)
 		return
 	}
 
@@ -52,11 +52,11 @@ func signinHandler(w http.ResponseWriter, r *http.Request) {
 
 	tokenStr, err := token.SignedString([]byte(jwtSecret))
 	if err != nil {
-		writeError(w, "ошибка создания токена")
+		writeError(w, "ошибка создания токена", http.StatusInternalServerError)
 		return
 	}
 
-	writeJSON(w, map[string]string{"token": tokenStr})
+	writeJSON(w, map[string]string{"token": tokenStr}, http.StatusOK)
 }
 
 func auth(next http.HandlerFunc) http.HandlerFunc {
